@@ -1,3 +1,26 @@
+/* ----------------------------------------------------------------------------
+SOURCE FILE
+
+Name:		poll.c
+
+Program:	  C10K
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-11
+
+Functions:
+	int poll_server()
+  void terminate(int sig)
+
+Description:
+	A polling server which forks a new process for each client
+
+Revisions:
+	(none)
+
+---------------------------------------------------------------------------- */
+
 #include "server.h"
 
 void terminate(int sig);
@@ -64,8 +87,10 @@ int poll_server(int port){
     // accept a new client
     newSocket = accept(listenSocket, (struct sockaddr*)&remote, &remotelen);
     if(newSocket == -1){
+      // error in accept
       perror("Accept failed");
-      return -1;
+      // terminate in case children have already started
+      terminate(0);
     }
 
     // spool up process to handle client
@@ -90,7 +115,28 @@ int poll_server(int port){
   return 0;
 }
 
+/* ----------------------------------------------------------------------------
+FUNCTION
 
+Name:		Terminate
+
+Prototype:	void terminate(int sig)
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-11
+
+Parameters:
+  int sig
+    the signal captured
+
+Description:
+  Caputres SIGINT and terminates any running children
+
+Revisions:
+  (none)
+
+---------------------------------------------------------------------------- */
 void terminate(int sig){
 
   // kill children to avoid zombies
