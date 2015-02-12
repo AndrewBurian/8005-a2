@@ -43,7 +43,7 @@ int create_server_socket(int serverPort){
 
   // set up the address
   local.sin_family = AF_INET;
-  local.sin_port = serverPort;
+  local.sin_port = htons(serverPort);
   local.sin_addr.s_addr = htonl(INADDR_ANY);
 
   // bind

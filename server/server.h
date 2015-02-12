@@ -7,9 +7,13 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
 
 // defines
 #define DEFAULT_PORT 7000
+#define BUFFER_SIZE 1024
 
 // different servers
 int poll_server(int port);

@@ -1,5 +1,6 @@
 #include "server.h"
 
+void terminate(int sig);
 
 /* ----------------------------------------------------------------------------
 FUNCTION
@@ -30,16 +31,71 @@ Revisions:
 int poll_server(int port){
 
   // the master listening socket
-  int listenSocket;
+  int listenSocket = 0;
 
+  // the client socket
+  int newSocket = 0;
 
+  // address struct and size for accept
+  struct sockaddr_in remote = {0};
+  socklen_t remotelen = 0;
+
+  // data buffer of arbitrary size
+  char buffer[BUFFER_SIZE];
+
+  // length of data read
+  int readData = 0;
 
   // create the server socket (common)
-  listenSocket = create_server_socket(port);
+  if((listenSocket = create_server_socket(port)) == -1){
+    return -1;
+  }
 
   // this is a scalable server, listen big
   listen(listenSocket, 100);
 
+  // before any children are spawned, put in place the signal handler
+  // so that any children may be terminated properly
+  signal(SIGINT, terminate);
+
+  // loop accepting clients
+  while(1){
+
+    // accept a new client
+    newSocket = accept(listenSocket, (struct sockaddr*)&remote, &remotelen);
+    if(newSocket == -1){
+      perror("Accept failed");
+      return -1;
+    }
+
+    // spool up process to handle client
+    if(!fork()){
+
+      // this now the child, remove signal handler
+      signal(SIGINT, SIG_DFL);
+
+      // read the data until the socket is closed
+      while((readData = read(newSocket, buffer, BUFFER_SIZE))  > 0){
+        // echo
+        write(newSocket, buffer, readData);
+      }
+
+      // connection closed
+      close(newSocket);
+      return 0;
+    }
+
+  }
 
   return 0;
+}
+
+
+void terminate(int sig){
+
+  // kill children to avoid zombies
+  fprintf(stderr, "\nSIGINT! Terminating children.\n");
+  kill(0, SIGKILL);
+  exit(1);
+
 }
