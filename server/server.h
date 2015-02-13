@@ -3,6 +3,7 @@
 
 
 // includes
+#define _GNU_SOURCE
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <getopt.h>
@@ -10,10 +11,15 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <sys/epoll.h>
+#include <fcntl.h>
+#include <errno.h>
 
 // defines
 #define DEFAULT_PORT 7000
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 5
+#define LISTEN_LIMIT 128
 
 // different servers
 int poll_server(int port);

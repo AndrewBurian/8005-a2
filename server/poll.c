@@ -75,7 +75,7 @@ int poll_server(int port){
   }
 
   // this is a scalable server, listen big
-  listen(listenSocket, 100);
+  listen(listenSocket, LISTEN_LIMIT);
 
   // before any children are spawned, put in place the signal handler
   // so that any children may be terminated properly
