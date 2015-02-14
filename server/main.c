@@ -116,8 +116,8 @@ int main(int argc, char** argv){
   }
 
   // threads is not honored in polling server
-  if(usePoll && threadCount){
-    fprintf(stderr, "Warning: Attempting to set threads with poll ignored\n");
+  if((usePoll + useSelect) && threadCount){
+    fprintf(stderr, "Warning: Attempting to set threads with non-epoll ignored\n");
   }
 
   // set threads to at least one
@@ -131,7 +131,7 @@ int main(int argc, char** argv){
   }
 
   if(useSelect){
-    return select_server(port, threadCount);
+    return select_server(port);
   }
 
   if(useEpoll){

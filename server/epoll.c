@@ -7,14 +7,6 @@ void* epoll_thread(void* args);
 // the socket that will listen for connections
 int listenSocket = 0;
 
-// the array of sockets for clients
-int* clients = 0;
-int numClients = 0;
-int maxClients = 0;
-
-// mutex for dealing with client list
-pthread_mutex_t clientLock;
-
 /* ----------------------------------------------------------------------------
 FUNCTION
 
@@ -85,21 +77,10 @@ int epoll_server(int port, int threads){
   // allocate space for thread pointers
   threadPnts = (pthread_t*)malloc(sizeof(pthread_t) * threads);
 
-  // allocate space for clients
-  clients = (int*)malloc(sizeof(int) * 1024);
-  maxClients = 1024;
-
-  // create the mutex with default attributes
-  if(pthread_mutex_init(&clientLock, 0)){
-    perror("Mutex init failed");
-    return -1;
-  }
-
   // create threads
   for(i = 0; i < threads; ++i){
    if(pthread_create(&threadPnts[i], 0, epoll_thread, &epollfd)){
      perror("Thread create failed");
-     free(clients);
      free(threadPnts);
      return -1;
    }
@@ -111,7 +92,6 @@ int epoll_server(int port, int threads){
   }
 
   // cleanup
-  free(clients);
   free(threadPnts);
   return 0;
 
@@ -147,7 +127,7 @@ void* epoll_thread(void* epollfdptr){
   // data buffer, unique to each thread
   char buffer[BUFFER_SIZE] = {0};
   int buflen = 0;
-  int read = 0;
+  int thisRead = 0;
 
   // array of events for waiting
   struct epoll_event events[LISTEN_LIMIT];
@@ -235,11 +215,11 @@ void* epoll_thread(void* epollfdptr){
 
         //read data from the socket
         buflen = 0;
-        while((read = recv(events[i].data.fd, &buffer[buflen],
+        while((thisRead = recv(events[i].data.fd, &buffer[buflen],
           BUFFER_SIZE - buflen, 0)) > 0){
 
           // space taken from the
-          buflen += read;
+          buflen += thisRead;
 
           // check to see if the buffer is full
           if(buflen == BUFFER_SIZE){
@@ -249,10 +229,10 @@ void* epoll_thread(void* epollfdptr){
           }
         }
         // end of reading
-        if(read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)){
+        if(thisRead == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)){
           // socket data exhaused with no read error
           send(events[i].data.fd, buffer, buflen, 0);
-        } else if (read == 0){
+        } else if (thisRead == 0){
           // socket performed a shutdown
           close(events[i].data.fd);
           // epoll will remove interest automatically on close

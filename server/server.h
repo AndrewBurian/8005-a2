@@ -23,7 +23,7 @@
 
 // different servers
 int poll_server(int port);
-int select_server(int port, int threads);
+int select_server(int port);
 int epoll_server(int port, int threads);
 
 // common functions
