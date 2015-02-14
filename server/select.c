@@ -1,3 +1,25 @@
+/* ----------------------------------------------------------------------------
+SOURCE FILE
+
+Name:		select.c
+
+Program:	  C10K
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-11
+
+Functions:
+  int select_server(int port)
+
+Description:
+  A multiplexing server centered around epoll
+
+Revisions:
+  (none)
+
+---------------------------------------------------------------------------- */
+
 #include "server.h"
 
 

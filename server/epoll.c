@@ -1,3 +1,26 @@
+/* ----------------------------------------------------------------------------
+SOURCE FILE
+
+Name:		select.c
+
+Program:	  C10K
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-11
+
+Functions:
+  int epoll_server(int port, int threads)
+  void* epoll_thread(void* epollfdptr)
+
+Description:
+  A multiplexing server centered around edge-triggered epoll, which can be
+  safely run on multiple threads concurrently
+
+Revisions:
+  (none)
+
+---------------------------------------------------------------------------- */
 
 #include "server.h"
 
