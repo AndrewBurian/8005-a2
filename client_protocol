@@ -1,0 +1,19 @@
+Controller -> Client
+-----------------------------------------
+TARGET <ip_addr> <port>\n
+SIZE <size_in_bytes>\n
+COUNT <number_of_connections>\n
+CYCLES <number_of_cycles>\n
+TEST\n
+
+
+
+Client -> Controller
+-----------------------------------------
+RESULT <int_code> <avg_time_to_reply>\n
+ERR <msg>\n
+
+
+Result codes
+0 ok
+1 server stopped responding
