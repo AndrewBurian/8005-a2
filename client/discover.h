@@ -31,7 +31,7 @@ Revisions:
 int discover(int broadcastPort, int serverPort, int* discoveredConnections,
     size_t maxConnections, struct timeval timeout);
 
-int discoverable(int listenPort, struct timeval timout);
+int discoverable(int listenPort, struct timeval* timout);
 
 
 #endif

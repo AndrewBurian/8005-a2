@@ -3,7 +3,7 @@ CC=gcc
 CFLAGS=-c -g -Wall
 LDFLAGS=
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=client
+EXECUTABLE=client.exe
 
 SOURCES=main.c discover.c
 

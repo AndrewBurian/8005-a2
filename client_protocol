@@ -5,6 +5,8 @@ SIZE <size_in_bytes>\n
 COUNT <number_of_connections>\n
 CYCLES <number_of_cycles>\n
 TEST\n
+DONE\n
+KILL\n
 
 
 
@@ -14,6 +16,12 @@ RESULT <int_code> <avg_time_to_reply>\n
 ERR <msg>\n
 
 
-Result codes
-0 ok
-1 server stopped responding
+
+Notes
+-----------------------------------------
+
+Result codes:
+  0 ok
+  1 server stopped responding
+
+Messages longer than 256B including the newline are discarded

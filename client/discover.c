@@ -213,7 +213,7 @@ Revisions:
 	(none)
 
 ---------------------------------------------------------------------------- */
-int discoverable(int listenPort, struct timeval timeout){
+int discoverable(int listenPort, struct timeval* timeout){
 
   // the socket to listen for broadcasts on
   int listenSocket = 0;
@@ -243,7 +243,7 @@ int discoverable(int listenPort, struct timeval timeout){
     fprintf(stderr, "Null listen port");
     return -1;
   }
-  if(!timeout.tv_sec && !timeout.tv_usec){
+  if(!timeout){
     infTimeout = 1;
   }
 
@@ -276,7 +276,7 @@ int discoverable(int listenPort, struct timeval timeout){
   }
 
   // listen for incoming
-  switch(select(listenSocket + 1, &listenSet, 0, 0, (infTimeout ? 0 : &timeout)))
+  switch(select(listenSocket + 1, &listenSet, 0, 0, (infTimeout ? 0 : timeout)))
   {
     case -1:
       perror("Select failed");
