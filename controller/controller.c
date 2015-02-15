@@ -261,7 +261,7 @@ int main(int argc, char** argv){
 
   // first set the target
   printf("Setting target ip to %s\n", serverAddress);
-  sprintf(cmd, "TARGET %16s\n%c", serverAddress, 0);
+  sprintf(cmd, "TARGET %16s %d\n%c", serverAddress, serverPort, 0);
   sendAll(clients, maxClients, cmd);
 
   // set the data size
@@ -292,6 +292,10 @@ int main(int argc, char** argv){
 
     // send to clients
     sprintf(cmd, "COUNT %d\n%c", connectionsPer, 0);
+    sendAll(clients, maxClients, cmd);
+
+    // run test
+    sprintf(cmd, "TEST\n%c", 0);
     sendAll(clients, maxClients, cmd);
 
     // gather replies
