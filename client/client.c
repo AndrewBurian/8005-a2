@@ -104,6 +104,8 @@ int main(int argc, char** argv){
       return -1;
     }
 
+    printf("New master\n");
+
     // now connected to the controller,
     if(!prepTest(controllerSocket)){
       // run test returned 0, meaning a kill was received, break inf loop
@@ -177,6 +179,14 @@ int prepTest(int controllerSocket){
   // loop talking to the controller until it's done
   while(1){
 
+    // check to see if the test is ready
+    if(bufSet && serverSet && clientsSet && iterationsSet){
+      ready = 1;
+    }
+
+    // reset buf pos
+    bufPos = 0;
+
     // read the message, terribly inefficiently, but safe and targeting \n
     while((thisRead = recv(controllerSocket, &msgBuf[bufPos], 1, 0)) > 0){
       // check to see if \n was reached and inc bufPos after
@@ -190,7 +200,9 @@ int prepTest(int controllerSocket){
     }
 
     // if read was 0, controller has disconnected for some reason
-    break;
+    if(!thisRead){
+      break;
+    }
 
     // check for too long
     if(bufPos == 256){
@@ -274,14 +286,10 @@ int prepTest(int controllerSocket){
       break;
     }
 
-    // check to see if the test is ready
-    if(bufSet && serverSet && clientsSet && iterationsSet){
-      ready = 1;
-    }
-
   }
 
   // return to waiting for a connection
+  printf("Released from master\n");
   close(controllerSocket);
   if(bufSet){
     free(test.dataBuf);
@@ -410,9 +418,6 @@ int runTest(struct testData* test){
       exit(-1);
     }
 
-    // make socket non-blocking
-    fcntl(sockets[i], F_SETFL, O_NONBLOCK | fcntl(sockets[i], F_GETFL, 0));
-
     // set the recv low water mark to the expected echo size
     if(setsockopt(sockets[i], SOL_SOCKET, SO_RCVLOWAT, &test->bufLen, sizeof(int))
       == -1){
@@ -466,6 +471,14 @@ int runTest(struct testData* test){
         return 0;
       }
     }
+
+    // make socket non-blocking
+    // this is done after connect so connect won't error with E_INPROGRESS
+    if(fcntl(sockets[i], F_SETFL, O_NONBLOCK | fcntl(sockets[i], F_GETFL, 0)) == -1){
+      perror("Set non-blocking failed");
+      // fatal
+      exit(-1);
+    }
   }
 
 
@@ -514,7 +527,7 @@ int runTest(struct testData* test){
         // data has been received
 
         // determine which socket
-        for(k = 0; j < test->clients; ++j){
+        for(k = 0; k < test->clients; ++k){
           if(sockets[k] == events[j].data.fd){
             break;
           }
@@ -552,16 +565,18 @@ int runTest(struct testData* test){
       endTimes[j].tv_usec -= startTimes[j].tv_usec;
 
       // check for new highest
-      if(endTimes[j].tv_sec >= test->high.tv_sec &&
-        endTimes[j].tv_usec > test->high.tv_usec){
+      if(endTimes[j].tv_sec > test->high.tv_sec ||
+        (endTimes[j].tv_sec == test->high.tv_sec &&
+        endTimes[j].tv_usec > test->high.tv_usec)){
 
         test->high.tv_sec = endTimes[j].tv_sec;
         test->high.tv_usec = endTimes[j].tv_usec;
       }
 
       // check for new lowest
-      if(endTimes[j].tv_sec <= test->low.tv_sec &&
-        endTimes[j].tv_usec < test->low.tv_usec){
+      if(endTimes[j].tv_sec < test->low.tv_sec ||
+        (endTimes[j].tv_sec == test->low.tv_sec &&
+        endTimes[j].tv_usec < test->low.tv_usec)){
 
         test->low.tv_sec = endTimes[j].tv_sec;
         test->low.tv_usec = endTimes[j].tv_usec;
@@ -570,6 +585,10 @@ int runTest(struct testData* test){
       // add the cumulative
       test->cumulative.tv_sec += endTimes[j].tv_sec;
       test->cumulative.tv_usec += endTimes[j].tv_usec;
+      if(test->cumulative.tv_usec > 1000000){
+        test->cumulative.tv_usec -= 1000000;
+        test->cumulative.tv_sec += 1;
+      }
 
     }
 
