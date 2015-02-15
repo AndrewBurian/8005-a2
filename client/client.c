@@ -349,6 +349,9 @@ int runTest(struct testData* test){
   // data dump buffer
   char* dumpBuf = 0;
 
+  // reuse addr enable
+  int resueaddr = 1;
+
   // iteration tracket
   int i = 0;
   int j = 0;
@@ -415,6 +418,15 @@ int runTest(struct testData* test){
     if((sockets[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1){
       perror("Socket create failed");
       // fatal
+      exit(-1);
+    }
+
+    // set reuse addr to avoid network errors
+    if(setsockopt(sockets[i], SOL_SOCKET, SO_REUSEADDR, &resueaddr, sizeof(int))
+      == -1){
+
+      perror("Failed to set SO_RCVLOWAT");
+      //fatal
       exit(-1);
     }
 
