@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "discover.h"
 
@@ -27,7 +28,10 @@ struct testData{
   int                 iterations; // how many iterations to test
   char*               dataBuf;    // the data buffer to test with
   int                 bufLen;     // how long the data buffer is
-  struct timeval      result;     // the average response time
+  struct timeval      high;       // the longest response time
+  struct timeval      low;        // the shortest response time
+  struct timeval      cumulative; // the total response time
+  int                 code;       // result code
 };
 
 // functions

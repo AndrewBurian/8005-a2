@@ -23,5 +23,8 @@ Notes
 Result codes:
   0 ok
   1 server stopped responding
+  2 server stopped connecting
+  3 server refused further connections
+  4 server disconnected
 
 Messages longer than 256B including the newline are discarded

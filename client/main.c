@@ -10,7 +10,7 @@ Developer:	Andrew Burian
 Created On: 2015-02-14
 
 Functions:
-	Function prototypes !!!!!!
+	Function prototypes
 
 Description:
 	A client designed to be controlled by the C10K controller, and to put pressure
@@ -251,11 +251,14 @@ int prepTest(int controllerSocket){
 
     if(strncmp(cmd, "TEST", 32) == 0){
       if(!ready){
-        send(controllerSocket, "ERR Not Ready to test", 22, 0);
+        send(controllerSocket, "ERR Not Ready to test\n", 22, 0);
         continue;
       }
-      runTest(&test);
-      reportTest(controllerSocket, &test);
+      if(runTest(&test)){
+        reportTest(controllerSocket, &test);
+      } else {
+        fprintf(stderr, "Test failed to run properly\n");
+      }
     }
 
     if(strncmp(cmd, "DONE", 32) == 0){
@@ -281,4 +284,333 @@ int prepTest(int controllerSocket){
     free(test.dataBuf);
   }
   return (killed ? 0 : 1);;
+}
+
+/* ----------------------------------------------------------------------------
+FUNCTION
+
+Name:		Run Test
+
+Prototype:	int runTest(struct testData* test)
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-14
+
+Parameters:
+	struct testData* test
+    the structure containing all the info needed to run the test
+
+Return Values:
+	1  Test completed successfully
+  0  Test did not run, errors
+
+Description:
+	Run the provided test and return the results into the test structure
+  Uses epoll to handle the responses as fast as possible
+
+Revisions:
+	(none)
+
+---------------------------------------------------------------------------- */
+int runTest(struct testData* test){
+
+  // the epoll descriptor
+  int epollfd = 0;
+
+  // for epoll wait events
+  struct epoll_event* events;
+  int fdCount = 0;
+
+  // for adding new connections
+  struct epoll_event addEvent = {0};
+
+  // the arrays of times
+  struct timeval* startTimes = 0;
+  struct timeval* endTimes = 0;
+
+  // client sockets
+  int* sockets = 0;
+
+  // keep track of pending responses
+  int repliesLeft = 0;
+
+  // data dump buffer
+  char* dumpBuf = 0;
+
+  // iteration tracket
+  int i = 0;
+  int j = 0;
+  int k = 0;
+
+
+  // validate test data
+  if(!test){
+    return 0;
+  }
+  if(test->clients < 1){
+    return 0;
+  }
+  if(test->iterations < 1){
+    return 0;
+  }
+  if(!test->dataBuf){
+    return 0;
+  }
+  if(test->bufLen < 1){
+    return 0;
+  }
+
+  // set the test code to assume success for now
+  test->code = 0;
+
+  // set the low too high
+  test->low.tv_sec = 9999;
+  test->low.tv_usec = 0;
+
+  // high and cumulative to zero
+  test->high.tv_sec = 0;
+  test->high.tv_usec = 0;
+  test->cumulative.tv_sec = 0;
+  test->cumulative.tv_usec = 0;
+
+  // allocate the times
+  startTimes = (struct timeval*)malloc(sizeof(struct timeval) * test->clients);
+  endTimes = (struct timeval*)malloc(sizeof(struct timeval) * test->clients);
+
+  // allocate the sockets
+  sockets = (int*)malloc(sizeof(int) * test->clients);
+
+  // allocate the epoll events
+  events = (struct epoll_event*)malloc(sizeof(struct epoll_event) * test->clients);
+
+  // allocate the dump buffer
+  dumpBuf = (char*)malloc(test->bufLen);
+
+  // setup epoll
+  if((epollfd = epoll_create1(0)) == -1){
+    perror("Epoll create failed");
+    // fatal
+    exit(-1);
+  }
+
+  // setup add events once
+  addEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET;
+
+  // create all the sockets
+  for(i = 0; i < test->clients; ++i){
+
+    // create socket
+    if((sockets[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1){
+      perror("Socket create failed");
+      // fatal
+      exit(-1);
+    }
+
+    // make socket non-blocking
+    fcntl(sockets[i], F_SETFL, O_NONBLOCK | fcntl(sockets[i], F_GETFL, 0));
+
+    // set the recv low water mark to the expected echo size
+    if(setsockopt(sockets[i], SOL_SOCKET, SO_RCVLOWAT, &test->bufLen, sizeof(int))
+      == -1){
+
+      perror("Failed to set SO_RCVLOWAT");
+      //fatal
+      exit(-1);
+    }
+
+    // add it to epoll
+    addEvent.data.fd = sockets[i];
+    if(epoll_ctl(epollfd, EPOLL_CTL_ADD, sockets[i], &addEvent) == -1){
+      perror("Epoll ctl failed with new socket");
+      // fatal
+      exit(-1);
+    }
+  }
+
+
+  // connect all the sockets
+  for(i = 0; i < test->clients; ++i){
+
+    if(connect(sockets[i], (struct sockaddr*)&test->server, sizeof(test->server))
+      == -1){
+
+      // failed to connect
+      perror("Failed to connect");
+      // check to see if it was a server error
+      if(i > 0){
+        if(errno == ETIMEDOUT){
+          test->code = 2;
+        } else if(errno == ECONNREFUSED){
+          test->code = 3;
+        }
+        // shutdown anything that opened so far
+        for(i = i; i >=0; --i){
+          close(sockets[i]);
+        }
+        // break the for loop
+        break;
+        // nothing else will execute as the test code is checked
+      } else {
+        // probably a parameter error
+        for(i = i; i >=0; --i){
+          close(sockets[i]);
+        }
+        free(events);
+        free(sockets);
+        free(startTimes);
+        free(endTimes);
+        return 0;
+      }
+    }
+  }
+
+
+  // begin main test loop
+  for(i = 0; i < test->iterations && test->code == 0; ++i){
+
+    // send the data to all sockets
+    for(j = 0; j < test->clients; ++j){
+
+      // send
+      send(sockets[j], test->dataBuf, test->bufLen, 0);
+
+      // timestamp outbound
+      gettimeofday(&startTimes[j], 0);
+    }
+
+    // track the responses expected
+    repliesLeft = test->clients;
+
+    // epoll on the response data
+    while(repliesLeft && test->code == 0){
+
+      // epoll on descriptors up to listen limit with no timeout
+      fdCount = epoll_wait (epollfd, events, test->clients, -1);
+
+      // loop through active events
+      for(j = 0; j < fdCount; ++j){
+
+        // Check this event for error
+        if(events[j].events & EPOLLERR){
+          fprintf(stderr, "Error on socket %d\n", events[i].data.fd);
+          // fatal
+          exit(-1);
+        }
+
+        // check for hangup
+        if(events[j].events & EPOLLHUP){
+          test->code = 4;
+          break;
+          // control will exit the events loop
+          // fail the epoll wait loop
+          // break out of the main loop
+          // and exit cleanly
+        }
+
+        // data has been received
+
+        // determine which socket
+        for(k = 0; j < test->clients; ++j){
+          if(sockets[k] == events[j].data.fd){
+            break;
+          }
+        }
+
+        // timestamp
+        gettimeofday(&endTimes[k], 0);
+
+        // clear the data
+        if(recv(sockets[k], dumpBuf, test->bufLen, 0) != test->bufLen){
+          fprintf(stderr, "Receive buffer size disagreement\n");
+          // fatal
+          exit(-1);
+        }
+
+        // note the reply
+        --repliesLeft;
+
+      }
+
+    }
+
+    // all replies received or failure
+
+    // check failure
+    if(test->code){
+      break;
+    }
+
+    // time processing
+    for(j = 0; j < test->clients; ++j){
+
+      // process the difference in time
+      endTimes[j].tv_sec -= startTimes[j].tv_sec;
+      endTimes[j].tv_usec -= startTimes[j].tv_usec;
+
+      // check for new highest
+      if(endTimes[j].tv_sec >= test->high.tv_sec &&
+        endTimes[j].tv_usec > test->high.tv_usec){
+
+        test->high.tv_sec = endTimes[j].tv_sec;
+        test->high.tv_usec = endTimes[j].tv_usec;
+      }
+
+      // check for new lowest
+      if(endTimes[j].tv_sec <= test->low.tv_sec &&
+        endTimes[j].tv_usec < test->low.tv_usec){
+
+        test->low.tv_sec = endTimes[j].tv_sec;
+        test->low.tv_usec = endTimes[j].tv_usec;
+      }
+
+      // add the cumulative
+      test->cumulative.tv_sec += endTimes[j].tv_sec;
+      test->cumulative.tv_usec += endTimes[j].tv_usec;
+
+    }
+
+
+  } // end main test loop
+
+
+  // cleanup
+
+  for(i = 0; i < test->clients; ++i){
+    close(sockets[i]);
+  }
+
+  free(events);
+  free(sockets);
+  free(startTimes);
+  free(endTimes);
+  return 1;
+}
+
+/* ----------------------------------------------------------------------------
+FUNCTION
+
+Name:		Report Test
+
+Prototype:	void reportTest(int controllerSocket, struct testData* test)
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-14
+
+Parameters:
+	int controllerSocket
+    the connection to the controller to report back to
+  struct testData* test
+    the test to report on
+
+Description:
+	Sends the data back to the controller
+
+Revisions:
+	(none)
+
+---------------------------------------------------------------------------- */
+void reportTest(int controllerSocket, struct testData* test){
+
 }
