@@ -15,16 +15,18 @@ $ make
 A System in 3 Parts
 --------------
 This project has 3 binaries, listed here, that make up the server, and the tools used to test it.
-Executable | Purpose
-------------|--------------
-Server | This is the server itself and can be invoked to use either a forking, polling, or edge-triggered polling model for monitoring connections
-Controller | The controller is the master of the client program. It discovers any clients running on the broadcast-enabled LAN and slaves them to bombard the target server program with connections
-Client | The client spools up connections as commanded by the controller, then monitors response times from the server and reports the data back to the controller
+
+|Executable | Purpose
+|------------ | --------------
+|Server | This is the server itself and can be invoked to use either a forking, polling, or edge-triggered polling model for monitoring connections
+|Controller | The controller is the master of the client program. It discovers any clients running on the broadcast-enabled LAN and slaves them to bombard the target server program with connections
+|Client | The client spools up connections as commanded by the controller, then monitors response times from the server and reports the data back to the controller
 
 Running
 ---------------
 <h3>Server</h3>
 The server requires one of either `--poll`, `--select`, or `--epoll` to be set.
+
 |Options | Description
 |------- | -----------
 |`-p` <br/>`--poll` | Runs the server in polling mode. A new child process is created for each connection
@@ -34,6 +36,7 @@ The server requires one of either `--poll`, `--select`, or `--epoll` to be set.
 
 <h3>Controller</h3>
 The controller requires all but `--output` or `--kill` to be set.
+
 |Options | Description
 |------- | -----------
 |`-p`<br/>`--discover-port` | Specifies the port that the discovers will be broadcast on when searching for clients. Responses will be returned to this port + 1
@@ -49,6 +52,7 @@ The controller requires all but `--output` or `--kill` to be set.
 
 <h3>Client</h3>
 The client requires no arguments to be set
+
 |Options | Description
 |------- | -------------
 |`-p`<br/>`--port` | Specifies the port that the client will listen on for incoming discovers from a controller<br/>If not set, 7002 is the default
