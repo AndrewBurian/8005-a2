@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
 SOURCE FILE
 
-Name:		main.c
+Name:		client.c
 
 Program:	C10K - Client
 
@@ -10,7 +10,10 @@ Developer:	Andrew Burian
 Created On: 2015-02-14
 
 Functions:
-	Function prototypes
+	int main(int argc, char** argv)
+  int prepTest(int controllerSocket)
+  int runTest(struct testData* test)
+  void reportTest(int controllerSocket, struct testData* test)
 
 Description:
 	A client designed to be controlled by the C10K controller, and to put pressure
