@@ -32,7 +32,7 @@ The server requires one of either `--poll`, `--select`, or `--epoll` to be set.
 |`-p` <br/>`--poll` | Runs the server in polling mode. A new child process is created for each connection
 |`-s`<br/>`--select` | Runs the server in level triggered kernel polling mode. Epoll is actually used over select for implementation but behavioral variations between this and select are negligible
 |`-e`<br/>`--epoll` | Runs the server is edge-triggered kernel polling mode. Epoll is once again used with non-blocking sockets
-|`-t`<br/>`--threads` | Only available with --epoll. Specifies a number of threads to run concurrently as Epoll in edge triggered mode can be called from muliple threads and remain thread safe
+|`-t`<br/>`--threads` | Only available with `--epoll`. Specifies a number of threads to run concurrently as Epoll in edge triggered mode can be called from muliple threads and remain thread safe
 
 <h3>Controller</h3>
 The controller requires all but `--output` or `--kill` to be set.
