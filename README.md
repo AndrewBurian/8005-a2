@@ -25,33 +25,33 @@ Running
 ---------------
 <h3>Server</h3>
 The server requires one of either `--poll`, `--select`, or `--epoll` to be set.
-Options|Description
--------|-----------
--p <br/>--poll|Runs the server in polling mode. A new child process is created for each connection
--s<br/>--select|Runs the server in level triggered kernel polling mode. Epoll is actually used over select for implementation but behavioral variations between this and select are negligible
--e<br/>--epoll|Runs the server is edge-triggered kernel polling mode. Epoll is once again used with non-blocking sockets
--t<br/>--threads|Only available with --epoll. Specifies a number of threads to run concurrently as Epoll in edge triggered mode can be called from muliple threads and remain thread safe
+|Options | Description
+|------- | -----------
+|`-p` <br/>`--poll` | Runs the server in polling mode. A new child process is created for each connection
+|`-s`<br/>`--select` | Runs the server in level triggered kernel polling mode. Epoll is actually used over select for implementation but behavioral variations between this and select are negligible
+|`-e`<br/>`--epoll` | Runs the server is edge-triggered kernel polling mode. Epoll is once again used with non-blocking sockets
+|`-t`<br/>`--threads` | Only available with --epoll. Specifies a number of threads to run concurrently as Epoll in edge triggered mode can be called from muliple threads and remain thread safe
 
 <h3>Controller</h3>
 The controller requires all but `--output` or `--kill` to be set.
-Options|Description
--------|-----------
--p<br/>--discover-port|Specifies the port that the discovers will be broadcast on when searching for clients. Responses will be returned to this port + 1
--a<br/>--server|Specifies the address of the target server in dotted decimal form
--s<br/>--data-size|Specifies the amount of data that will be sent to the server per volley
--l<br/>--server-port|Specifies the port the clients will connect to the server on
--i<br/>--increment|Specifies how many connections should be added for each iteration of the test
--c<br/>--clients|Specifies how many clients will be slaved at a maximum
--b<br/>--base-connects|Specifies how many connections testing should start from
--v<br/>--vollies|Specifies how many volleys of data will be sent for each iteration of testing
--o<br/>--output|Specifies the output file to print results to. <br/> If not set, stdout is used
--k<br/>--kill|If set, the controller will connect up to `--clients` and order them to terminate, then exit.
+|Options | Description
+|------- | -----------
+|`-p`<br/>`--discover-port` | Specifies the port that the discovers will be broadcast on when searching for clients. Responses will be returned to this port + 1
+|`-a`<br/>`--server` | Specifies the address of the target server in dotted decimal form
+|`-s`<br/>`--data-size` | Specifies the amount of data that will be sent to the server per volley
+|`-l`<br/>`--server-port` | Specifies the port the clients will connect to the server on
+|`-i`<br/>`--increment` | Specifies how many connections should be added for each iteration of the test
+|`-c`<br/>`--clients` | Specifies how many clients will be slaved at a maximum
+|`-b`<br/>`--base-connects` | Specifies how many connections testing should start from
+|`-v`<br/>`--vollies` | Specifies how many volleys of data will be sent for each iteration of testing
+|`-o`<br/>`--output` | Specifies the output file to print results to. <br/> If not set, stdout is used
+|`-k`<br/>`--kill` | If set, the controller will connect up to `--clients` and order them to terminate, then exit.
 
 <h3>Client</h3>
 The client requires no arguments to be set
-Options|Description
--------|-------------
--p<br/>--port|Specifies the port that the client will listen on for incoming discovers from a controller<br/>If not set, 7002 is the default
+|Options | Description
+|------- | -------------
+|`-p`<br/>`--port` | Specifies the port that the client will listen on for incoming discovers from a controller<br/>If not set, 7002 is the default
 
 Results
 -----------------------
@@ -59,4 +59,4 @@ Not yet gathered.
 
 License
 -----------------
-See [License](LISCENCE)
+See [License](LICENSE)
