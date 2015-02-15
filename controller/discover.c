@@ -275,43 +275,49 @@ int discoverable(int listenPort, struct timeval* timeout){
     return -1;
   }
 
-  // listen for incoming
-  switch(select(listenSocket + 1, &listenSet, 0, 0, (infTimeout ? 0 : timeout)))
-  {
-    case -1:
-      perror("Select failed");
+  // while loop to allow for failed connect-backs
+  while(1){
+
+    // listen for incoming
+    switch(select(listenSocket + 1, &listenSet, 0, 0, (infTimeout ? 0 : timeout)))
+    {
+      case -1:
+        perror("Select failed");
+        close(listenSocket);
+        return -1;
+      case 0:
+        //timeout
+        close(listenSocket);
+        return 0;
+    }
+
+    // incoming broadcast
+    recvfrom(listenSocket, &responsePort, sizeof(int), 0,
+      (struct sockaddr*)&address, &addr_size);
+
+    printf("Incoming discover from %s\n", inet_ntoa(address.sin_addr));
+
+    // done with listen socket
+    close(listenSocket);
+
+    // swap the source port for the response port
+    address.sin_port = htons(responsePort);
+
+    // create the connect socket
+    connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(connectSocket == -1){
+      perror("Connect socket failed to create");
       close(listenSocket);
       return -1;
-    case 0:
-      //timeout
-      close(listenSocket);
-      return 0;
-  }
+    }
 
-  // incoming broadcast
-  recvfrom(listenSocket, &responsePort, sizeof(int), 0,
-    (struct sockaddr*)&address, &addr_size);
+    // connect back
+    if(connect(connectSocket, (struct sockaddr*)&address, addr_size) == -1){
+      perror("Could not connect to server");
+      continue;
+    }
 
-  printf("Incoming discover from %s\n", inet_ntoa(address.sin_addr));
-
-  // done with listen socket
-  close(listenSocket);
-
-  // swap the source port for the response port
-  address.sin_port = htons(responsePort);
-
-  // create the connect socket
-  connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if(connectSocket == -1){
-    perror("Connect socket failed to create");
-    close(listenSocket);
-    return -1;
-  }
-
-  // connect back
-  if(connect(connectSocket, (struct sockaddr*)&address, addr_size) == -1){
-    perror("Could not connect to server");
-    return -1;
+    break;
   }
 
   // return connected socket
