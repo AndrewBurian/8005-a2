@@ -48,7 +48,7 @@ The controller requires all but `--output` or `--kill` to be set.
 |`-b`<br/>`--base-connects` | Specifies how many connections testing should start from
 |`-v`<br/>`--vollies` | Specifies how many volleys of data will be sent for each iteration of testing
 |`-o`<br/>`--output` | Specifies the output file to print results to. <br/> If not set, stdout is used
-|`-k`<br/>`--kill` | If set, the controller will connect up to `--clients` and order them to terminate, then exit.
+|`-k`<br/>`--kill` | If set, the controller will connect up to clients and order them to terminate, then exit.<br/>Requires `--clients` and `--discover-port`
 
 <h3>Client</h3>
 The client requires no arguments to be set

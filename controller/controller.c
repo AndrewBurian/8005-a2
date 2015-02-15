@@ -204,8 +204,19 @@ int main(int argc, char** argv){
   }
 
   // validate args
-  if((!discoverPort || !serverPort || !increment || !maxClients || !baseConnections
-    || !serverAddress || !vollies || !dataSize) && !kill){
+
+  // if kill, exempt the unnessesary args
+  if(kill && discoverPort && maxClients){
+    serverPort = 1;
+    increment = 1;
+    baseConnections = 1;
+    serverAddress = (char*)1;
+    vollies = 1;
+    dataSize = 1;
+  }
+  // if not kill, all must be set
+  if(!discoverPort || !serverPort || !increment || !maxClients || !baseConnections
+    || !serverAddress || !vollies || !dataSize){
 
     fprintf(stderr, "Invocation must contain all args\n"
     "discover-port\n"
@@ -216,6 +227,7 @@ int main(int argc, char** argv){
     "clients\n"
     "base-connects\n"
     "vollies\n");
+    return -1;
   }
 
   // if no output file, use stdout
