@@ -605,12 +605,38 @@ Parameters:
     the test to report on
 
 Description:
-	Sends the data back to the controller
+  Does all the long slow number crunching on the time and sends the data back
+  to the controller
 
 Revisions:
 	(none)
 
 ---------------------------------------------------------------------------- */
 void reportTest(int controllerSocket, struct testData* test){
+
+  // the buffer for our response
+  char response[45] = {0};
+
+  // time values
+  double min = 0;
+  double max = 0;
+  double cumulative = 0;
+
+  // convert tv structs into a double
+  min =  test->low.tv_sec * 1000000.0 + test->low.tv_usec;
+  max =  test->high.tv_sec * 1000000.0 + test->high.tv_usec;
+  cumulative =  test->cumulative.tv_sec * 1000000.0 + test->cumulative.tv_usec;
+
+  // convert usec into ms
+  min /= 1000.0;
+  max /= 1000.0;
+  cumulative /= 1000.0;
+
+  // print it into a string
+  sprintf(response, "RESULT %d %10.3f %10.3f %10.3f\n",
+    test->code, min, max, cumulative);
+
+  // send the string
+  send(controllerSocket, response, strlen(response), 0);
 
 }

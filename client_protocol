@@ -12,7 +12,7 @@ KILL\n
 
 Client -> Controller
 -----------------------------------------
-RESULT <int_code> <avg_time_to_reply>\n
+RESULT <int_code> <min> <max> <cumulative>\n
 ERR <msg>\n
 
 
