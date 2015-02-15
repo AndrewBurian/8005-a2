@@ -1,3 +1,23 @@
+/* ----------------------------------------------------------------------------
+HEADER FILE
+
+Name:		server.h
+
+Program:	C10K
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-13
+
+Description:
+	A server with three different socket management strategies for comparing
+  performance across numerous connections
+
+Revisions:
+  (none)
+
+---------------------------------------------------------------------------- */
+
 #ifndef SERVER_H
 #define SERVER_H
 

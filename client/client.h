@@ -1,3 +1,24 @@
+/* ----------------------------------------------------------------------------
+HEADER FILE
+
+Name:		client.h
+
+Program:	C10K - Client
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-14
+
+Description:
+  A client designed to be controlled by the C10K controller, and to put pressure
+  onto the C10K server, timing the responses and relaying the data back to the
+  controller.
+
+Revisions:
+	(none)
+
+---------------------------------------------------------------------------- */
+
 #ifndef CLIENT_H
 #define CLIENT_H
 

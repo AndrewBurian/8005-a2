@@ -10,7 +10,9 @@ Developer:	Andrew Burian
 Created On: 2015-02-14
 
 Functions:
-  Function prototypes
+  int main(int argc, char** argv)
+  void sendAll(int* clients, int count, char* buf)
+  int recvAll(int* clients, int count, struct stats* testStats)
 
 Description:
   A controller, which can discover and interface with any clients available
@@ -321,7 +323,33 @@ int main(int argc, char** argv){
   return 0;
 }
 
+/* ----------------------------------------------------------------------------
+FUNCTION
 
+Name:		Send to All
+
+Prototype:	void sendAll(int* clients, int count, char* buf)
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-14
+
+Parameters:
+	int* clients
+    the array of clients to send to
+  int count
+    the number of elements in the clients array
+  char* buf
+    the null terminated data buffer to send out
+
+Description:
+	Sends a null terminated buffer to all clients in the array, then zeros the
+  data buffer
+
+Revisions:
+	(none)
+
+---------------------------------------------------------------------------- */
 void sendAll(int* clients, int count, char* buf){
 
   int i = 0;
@@ -335,7 +363,37 @@ void sendAll(int* clients, int count, char* buf){
 
 }
 
+/* ----------------------------------------------------------------------------
+FUNCTION
 
+Name:		Receive From All
+
+Prototype:	int recvAll(int* clients, int count, struct stats* testStats)
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-14
+
+Parameters:
+	int* clients
+    the array of sockets to read from
+  int count
+    the size of the clients array
+  struct stats* testStats
+    the structure to populate and return
+
+Return Values:
+	int > 0    the first non-zero error code encountered
+  0          success
+  -1         client shutdown
+
+Description:
+	Processes the results being sent back from the clients
+
+Revisions:
+	(none)
+
+---------------------------------------------------------------------------- */
 int recvAll(int* clients, int count, struct stats* testStats){
 
   // for socket reading
