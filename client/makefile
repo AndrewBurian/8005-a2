@@ -5,7 +5,7 @@ LDFLAGS=
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=client.exe
 
-SOURCES=main.c discover.c
+SOURCES=client.c discover.c
 
 all: $(SOURCES) $(EXECUTABLE)
 
