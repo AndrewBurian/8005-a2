@@ -45,7 +45,9 @@ Revisions:
 // data types
 struct testData{
   struct sockaddr_in  server;     // the server to test
+  int                 epollfd;    // the epoll descriptor
   int                 clients;    // how many connections to use
+  int*                sockets;    // the client sockets
   int                 iterations; // how many iterations to test
   char*               dataBuf;    // the data buffer to test with
   int                 bufLen;     // how long the data buffer is
@@ -59,5 +61,6 @@ struct testData{
 int prepTest(int controllerSocket);
 int runTest(struct testData* test);
 void reportTest(int controllerSocket, struct testData* test);
+int create_and_connect(struct testData* test, int newSockCount);
 
 #endif
