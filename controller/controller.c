@@ -244,7 +244,7 @@ int main(int argc, char** argv){
 
   printf("%d found\n", maxClients);
 
-  if(!maxClients){
+  if(maxClients < 1){
     printf("Failed to find any clients.\n");
     return 0;
   }

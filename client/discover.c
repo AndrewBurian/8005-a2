@@ -113,6 +113,14 @@ int discover(int broadcastPort, int serverPort, int* discoveredConnections,
     perror("Listening socket failed to create");
     return -1;
   }
+
+  if(setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &arg, sizeof(int))
+    == -1){
+    perror("Reuse Addr failed");
+    close(listenSocket);
+    return -1;
+  }
+
   address.sin_family = AF_INET;
   address.sin_port = htons(serverPort);
   address.sin_addr.s_addr = htonl(INADDR_ANY);
