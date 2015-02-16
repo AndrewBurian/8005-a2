@@ -30,8 +30,7 @@ Revisions:
 int prepTest(int controllerSocket){
 
   // the test data struct to accumulate
-  struct testData test = {{0}, 0, 0, 0, 0, 0, 0,
-    {0}, {0}, {0}, 0};
+  struct testData test = {{0}, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}, 0};
 
   // boolean ready to test flag
   int ready = 0;
@@ -194,6 +193,12 @@ int prepTest(int controllerSocket){
   if(bufSet){
     free(test.dataBuf);
   }
+
+  // cleanup
+  for(i = 0; i < test.clients; ++i){
+    close(test.sockets[i]);
+  }
+
   return (killed ? 0 : 1);;
 }
 
@@ -232,9 +237,13 @@ int create_and_connect(struct testData* test, int newSockCount){
   // reuse addr enable
   int resueaddr = 1;
 
-
   // setup add events once
   addEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET;
+
+  // allocate the amount of clients nessesary
+  if(newSockCount > test->clients){
+    test->sockets = (int*)realloc(test->sockets, sizeof(int) * newSockCount);
+  }
 
   // create all the sockets
   for(i = test->clients; i < newSockCount; ++i){

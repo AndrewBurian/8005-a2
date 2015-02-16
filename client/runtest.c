@@ -37,9 +37,6 @@ int runTest(struct testData* test){
   struct timeval* startTimes = 0;
   struct timeval* endTimes = 0;
 
-  // client sockets
-  int* sockets = 0;
-
   // keep track of pending responses
   int repliesLeft = 0;
 
@@ -86,9 +83,6 @@ int runTest(struct testData* test){
   startTimes = (struct timeval*)malloc(sizeof(struct timeval) * test->clients);
   endTimes = (struct timeval*)malloc(sizeof(struct timeval) * test->clients);
 
-  // allocate the sockets
-  sockets = (int*)malloc(sizeof(int) * test->clients);
-
   // allocate the epoll events
   events = (struct epoll_event*)malloc(sizeof(struct epoll_event) * test->clients);
 
@@ -102,7 +96,7 @@ int runTest(struct testData* test){
     for(j = 0; j < test->clients; ++j){
 
       // send
-      send(sockets[j], test->dataBuf, test->bufLen, 0);
+      send(test->sockets[j], test->dataBuf, test->bufLen, 0);
 
       // timestamp outbound
       gettimeofday(&startTimes[j], 0);
@@ -141,7 +135,7 @@ int runTest(struct testData* test){
 
         // determine which socket
         for(k = 0; k < test->clients; ++k){
-          if(sockets[k] == events[j].data.fd){
+          if(test->sockets[k] == events[j].data.fd){
             break;
           }
         }
@@ -150,7 +144,7 @@ int runTest(struct testData* test){
         gettimeofday(&endTimes[k], 0);
 
         // clear the data
-        if(recv(sockets[k], dumpBuf, test->bufLen, 0) != test->bufLen){
+        if(recv(test->sockets[k], dumpBuf, test->bufLen, 0) != test->bufLen){
           fprintf(stderr, "Receive buffer size disagreement\n");
           // fatal
           exit(-1);
@@ -208,15 +202,7 @@ int runTest(struct testData* test){
 
   } // end main test loop
 
-
-  // cleanup
-
-  for(i = 0; i < test->clients; ++i){
-    close(sockets[i]);
-  }
-
   free(events);
-  free(sockets);
   free(startTimes);
   free(endTimes);
   return 1;
