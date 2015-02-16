@@ -147,7 +147,8 @@ Revisions:
 int prepTest(int controllerSocket){
 
   // the test data struct to accumulate
-  struct testData test;
+  struct testData test = {{0}, 0, 0, 0, 0, 0, 0,
+    {0}, {0}, {0}, 0};
 
   // boolean ready to test flag
   int ready = 0;
@@ -175,6 +176,13 @@ int prepTest(int controllerSocket){
 
   // general counter
   int i = 0;
+
+  // setup epoll
+  if((test.epollfd = epoll_create1(0)) == -1){
+    perror("Epoll create failed");
+    // fatal
+    exit(-1);
+  }
 
   // loop talking to the controller until it's done
   while(1){
@@ -249,6 +257,15 @@ int prepTest(int controllerSocket){
       if(sscanf(msgBuf, "%32s %d", cmd, &iArg) != 2){
         continue;
       }
+
+      // make new client connections if nessesary
+      if(create_and_connect(&test, iArg) == -1)
+      {
+        clientsSet = 0;
+        continue;
+      }
+
+      // update the number of clients connected
       test.clients = iArg;
       clientsSet = 1;
       continue;
@@ -326,15 +343,9 @@ Revisions:
 ---------------------------------------------------------------------------- */
 int runTest(struct testData* test){
 
-  // the epoll descriptor
-  int epollfd = 0;
-
   // for epoll wait events
   struct epoll_event* events;
   int fdCount = 0;
-
-  // for adding new connections
-  struct epoll_event addEvent = {0};
 
   // the arrays of times
   struct timeval* startTimes = 0;
@@ -348,9 +359,6 @@ int runTest(struct testData* test){
 
   // data dump buffer
   char* dumpBuf = 0;
-
-  // reuse addr enable
-  int resueaddr = 1;
 
   // iteration tracket
   int i = 0;
@@ -401,99 +409,6 @@ int runTest(struct testData* test){
   // allocate the dump buffer
   dumpBuf = (char*)malloc(test->bufLen);
 
-  // setup epoll
-  if((epollfd = epoll_create1(0)) == -1){
-    perror("Epoll create failed");
-    // fatal
-    exit(-1);
-  }
-
-  // setup add events once
-  addEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET;
-
-  // create all the sockets
-  for(i = 0; i < test->clients; ++i){
-
-    // create socket
-    if((sockets[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1){
-      perror("Socket create failed");
-      // fatal
-      exit(-1);
-    }
-
-    // set reuse addr to avoid network errors
-    if(setsockopt(sockets[i], SOL_SOCKET, SO_REUSEADDR, &resueaddr, sizeof(int))
-      == -1){
-
-      perror("Failed to set SO_RCVLOWAT");
-      //fatal
-      exit(-1);
-    }
-
-    // set the recv low water mark to the expected echo size
-    if(setsockopt(sockets[i], SOL_SOCKET, SO_RCVLOWAT, &test->bufLen, sizeof(int))
-      == -1){
-
-      perror("Failed to set SO_RCVLOWAT");
-      //fatal
-      exit(-1);
-    }
-
-    // add it to epoll
-    addEvent.data.fd = sockets[i];
-    if(epoll_ctl(epollfd, EPOLL_CTL_ADD, sockets[i], &addEvent) == -1){
-      perror("Epoll ctl failed with new socket");
-      // fatal
-      exit(-1);
-    }
-  }
-
-
-  // connect all the sockets
-  for(i = 0; i < test->clients; ++i){
-
-    if(connect(sockets[i], (struct sockaddr*)&test->server, sizeof(test->server))
-      == -1){
-
-      // failed to connect
-      perror("Failed to connect");
-      // check to see if it was a server error
-      if(i > 0){
-        if(errno == ETIMEDOUT){
-          test->code = 2;
-        } else if(errno == ECONNREFUSED){
-          test->code = 3;
-        }
-        // shutdown anything that opened so far
-        for(i = i; i >=0; --i){
-          close(sockets[i]);
-        }
-        // break the for loop
-        break;
-        // nothing else will execute as the test code is checked
-      } else {
-        // probably a parameter error
-        for(i = i; i >=0; --i){
-          close(sockets[i]);
-        }
-        free(events);
-        free(sockets);
-        free(startTimes);
-        free(endTimes);
-        return 0;
-      }
-    }
-
-    // make socket non-blocking
-    // this is done after connect so connect won't error with E_INPROGRESS
-    if(fcntl(sockets[i], F_SETFL, O_NONBLOCK | fcntl(sockets[i], F_GETFL, 0)) == -1){
-      perror("Set non-blocking failed");
-      // fatal
-      exit(-1);
-    }
-  }
-
-
   // begin main test loop
   for(i = 0; i < test->iterations && test->code == 0; ++i){
 
@@ -514,7 +429,7 @@ int runTest(struct testData* test){
     while(repliesLeft && test->code == 0){
 
       // epoll on descriptors up to listen limit with no timeout
-      fdCount = epoll_wait (epollfd, events, test->clients, -1);
+      fdCount = epoll_wait (test->epollfd, events, test->clients, -1);
 
       // loop through active events
       for(j = 0; j < fdCount; ++j){
@@ -672,5 +587,128 @@ void reportTest(int controllerSocket, struct testData* test){
 
   // send the string
   send(controllerSocket, response, strlen(response), 0);
+
+}
+
+/* ----------------------------------------------------------------------------
+FUNCTION
+
+Name:		Create And Connect
+
+Prototype:	int create_and_connect(struct testData* test, int newSockCount)
+
+Developer:	Andrew Burian
+
+Created On:	2015-02-16
+
+Parameters:
+  struct testData* test
+    the test data structure containing all the sockets to be created
+  int
+    the total of sockets to create up to
+
+Description:
+  Adds any new socket nessesary to the test data
+
+Revisions:
+  (none)
+
+---------------------------------------------------------------------------- */
+int create_and_connect(struct testData* test, int newSockCount){
+
+  // counter
+  int i = 0;
+
+  // for adding new connections
+  struct epoll_event addEvent = {0};
+
+  // reuse addr enable
+  int resueaddr = 1;
+
+
+  // setup add events once
+  addEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET;
+
+  // create all the sockets
+  for(i = test->clients; i < newSockCount; ++i){
+
+    // create socket
+    if((test->sockets[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1){
+      perror("Socket create failed");
+      // fatal
+      exit(-1);
+    }
+
+    // set reuse addr to avoid network errors
+    if(setsockopt(test->sockets[i], SOL_SOCKET, SO_REUSEADDR, &resueaddr, sizeof(int))
+      == -1){
+
+      perror("Failed to set SO_RCVLOWAT");
+      //fatal
+      exit(-1);
+    }
+
+    // set the recv low water mark to the expected echo size
+    if(setsockopt(test->sockets[i], SOL_SOCKET, SO_RCVLOWAT, &test->bufLen, sizeof(int))
+      == -1){
+
+      perror("Failed to set SO_RCVLOWAT");
+      //fatal
+      exit(-1);
+    }
+
+    // add it to epoll
+    addEvent.data.fd = test->sockets[i];
+    if(epoll_ctl(test->epollfd, EPOLL_CTL_ADD, test->sockets[i], &addEvent) == -1){
+      perror("Epoll ctl failed with new socket");
+      // fatal
+      exit(-1);
+    }
+  }
+
+
+  // connect all the sockets
+  for(i = test->clients; i < newSockCount; ++i){
+
+    if(connect(test->sockets[i], (struct sockaddr*)&test->server,
+      sizeof(test->server)) == -1){
+
+      // failed to connect
+      perror("Failed to connect");
+      // check to see if it was a server error
+      if(i > 0){
+        if(errno == ETIMEDOUT){
+          test->code = 2;
+        } else if(errno == ECONNREFUSED){
+          test->code = 3;
+        }
+        // shutdown anything that opened so far
+        for(i = i; i >=0; --i){
+          close(test->sockets[i]);
+        }
+        // break the for loop
+        break;
+        // nothing else will execute as the test code is checked
+      } else {
+        // probably a parameter error
+        for(i = i; i >=0; --i){
+          close(test->sockets[i]);
+        }
+        return -1;
+      }
+    }
+
+    // make socket non-blocking
+    // this is done after connect so connect won't error with E_INPROGRESS
+    if(fcntl(test->sockets[i], F_SETFL, O_NONBLOCK |
+        fcntl(test->sockets[i], F_GETFL, 0)) == -1){
+
+      perror("Set non-blocking failed");
+      // fatal
+      exit(-1);
+    }
+  }
+
+  return 1;
 
 }
