@@ -330,6 +330,9 @@ int main(int argc, char** argv){
     // increase connections
     totalConnections += increment;
 
+    // give the network a brief break
+    sleep(1);
+
   }
 
   printf("Test done\n");
