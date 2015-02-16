@@ -300,17 +300,26 @@ int main(int argc, char** argv){
     // when there's an error, print and break
     if(responseCode){
       switch(responseCode){
-        case 1:
+        case 101:
           printf("Server stopped responding\n");
           break;
-        case 2:
+        case 102:
           printf("Server stopped connecting\n");
           break;
-        case 3:
+        case 103:
           printf("Server refused further connections\n");
           break;
-        case 4:
+        case 104:
           printf("Server disconnected\n");
+          break;
+        case 105:
+          printf("Server responded with different size\n");
+          break;
+        case 201:
+          printf("Client received epoll error\n");
+          break;
+        case 202:
+          printf("Server could not be contacted\n");
           break;
         case -1:
           printf("Test Client Stopped unexpectedly\n");

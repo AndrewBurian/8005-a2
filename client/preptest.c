@@ -143,8 +143,7 @@ int prepTest(int controllerSocket){
       // make new client connections if nessesary
       if(create_and_connect(&test, iArg) == -1)
       {
-        clientsSet = 0;
-        continue;
+        reportTest(controllerSocket, &test);
       }
 
       // update the number of clients connected
@@ -219,6 +218,9 @@ Parameters:
   int
     the total of sockets to create up to
 
+Return Values:
+  0    added properly
+  -1   error conditions
 Description:
   Adds any new socket nessesary to the test data
 
@@ -294,24 +296,22 @@ int create_and_connect(struct testData* test, int newSockCount){
       // check to see if it was a server error
       if(i > 0){
         if(errno == ETIMEDOUT){
-          test->code = 2;
+          test->code = 102;
         } else if(errno == ECONNREFUSED){
-          test->code = 3;
+          test->code = 103;
         }
         // shutdown anything that opened so far
         for(i = i; i >=0; --i){
           close(test->sockets[i]);
         }
-        // break the for loop
-        break;
-        // nothing else will execute as the test code is checked
       } else {
         // probably a parameter error
         for(i = i; i >=0; --i){
           close(test->sockets[i]);
         }
-        return -1;
+        test->code = 202;
       }
+      return -1;
     }
 
     // make socket non-blocking
@@ -325,6 +325,6 @@ int create_and_connect(struct testData* test, int newSockCount){
     }
   }
 
-  return 1;
+  return 0;
 
 }
