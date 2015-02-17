@@ -86,8 +86,8 @@ int runTest(struct testData* test){
   // allocate the epoll events
   events = (struct epoll_event*)malloc(sizeof(struct epoll_event) * test->clients);
 
-  // allocate the dump buffer
-  dumpBuf = (char*)malloc(test->bufLen);
+  // allocate the dump buffer bigger than expected for disagreement
+  dumpBuf = (char*)malloc(test->bufLen * 1.5);
 
   // begin main test loop
   for(i = 0; i < test->iterations && test->code == 0; ++i){
@@ -109,7 +109,13 @@ int runTest(struct testData* test){
     while(repliesLeft && test->code == 0){
 
       // epoll on descriptors up to listen limit with no timeout
-      fdCount = epoll_wait (test->epollfd, events, test->clients, -1);
+      fdCount = epoll_wait (test->epollfd, events, test->clients, 10000);
+
+      // check for timeout
+      if(fdCount == 0){
+        test->code = 101;
+        break;
+      }
 
       // loop through active events
       for(j = 0; j < fdCount; ++j){
@@ -117,13 +123,13 @@ int runTest(struct testData* test){
         // Check this event for error
         if(events[j].events & EPOLLERR){
           fprintf(stderr, "Error on socket %d\n", events[i].data.fd);
-          // fatal
-          exit(-1);
+          test->code = 201;
+          break;
         }
 
         // check for hangup
         if(events[j].events & EPOLLHUP){
-          test->code = 4;
+          test->code = 104;
           break;
           // control will exit the events loop
           // fail the epoll wait loop
@@ -144,10 +150,10 @@ int runTest(struct testData* test){
         gettimeofday(&endTimes[k], 0);
 
         // clear the data
-        if(recv(test->sockets[k], dumpBuf, test->bufLen, 0) != test->bufLen){
+        if(recv(test->sockets[k], dumpBuf, test->bufLen * 1.5, 0) != test->bufLen){
           fprintf(stderr, "Receive buffer size disagreement\n");
-          // fatal
-          exit(-1);
+          test->code = 105;
+          break;
         }
 
         // note the reply
