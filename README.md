@@ -1,5 +1,13 @@
 # C10K - Scalable Server Design Research
 
+Critical Acclimation for C10K project
+------------------------
+> "What does it do exactly? ... uh-huh... nevermind. Can you test my server with it?"
+
+> "Shotty using Andrew's client thing next. It's bad a** yo."
+
+> "Well, our server seems good, but we'll have to run it through Andrew's crazy botnet thing to get any significant results."
+
 
 Installing From Sources
 ---------------
