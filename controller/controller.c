@@ -325,13 +325,10 @@ int main(int argc, char** argv){
 
     // no error
     fprintf(outputFile, "%10.3f, %10.3f, %10.3f\n", testStats.low,
-      testStats.high, testStats.cumulative);
+      testStats.high, (testStats.cumulative / (totalConnections * vollies)));
 
     // increase connections
     totalConnections += increment;
-
-    // give the network a brief break
-    sleep(1);
 
   }
 
