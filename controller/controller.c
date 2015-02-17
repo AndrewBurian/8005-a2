@@ -278,7 +278,7 @@ int main(int argc, char** argv){
   totalConnections = baseConnections;
 
   printf("Beginning test\n");
-  fprintf(outputFile, "Connections, minTime, maxTime, cumulative\n");
+  fprintf(outputFile, "Connections, minTime, maxTime, average\n");
 
   // keep pushing until death!
   while(1){
@@ -326,6 +326,7 @@ int main(int argc, char** argv){
     // no error
     fprintf(outputFile, "%10.3f, %10.3f, %10.3f\n", testStats.low,
       testStats.high, (testStats.cumulative / (totalConnections * vollies)));
+    fflush(outputFile);
 
     // increase connections
     totalConnections += increment;
