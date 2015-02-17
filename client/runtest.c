@@ -109,7 +109,7 @@ int runTest(struct testData* test){
     while(repliesLeft && test->code == 0){
 
       // epoll on descriptors up to listen limit with no timeout
-      fdCount = epoll_wait (test->epollfd, events, test->clients, 10000000);
+      fdCount = epoll_wait (test->epollfd, events, test->clients, 10000);
 
       // check for timeout
       if(fdCount == 0){
