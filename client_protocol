@@ -22,9 +22,12 @@ Notes
 
 Result codes:
   0 ok
-  1 server stopped responding
-  2 server stopped connecting
-  3 server refused further connections
-  4 server disconnected
+
+  101 server stopped responding
+  102 server stopped connecting
+  103 server refused further connections
+  104 server disconnected
+
+  201 client error
 
 Messages longer than 256B including the newline are discarded

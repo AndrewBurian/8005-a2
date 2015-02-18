@@ -304,16 +304,16 @@ int main(int argc, char** argv){
     // when there's an error, print and break
     if(responseCode){
       switch(responseCode){
-        case 1:
+        case 101:
           printf("Server stopped responding\n");
           break;
-        case 2:
+        case 102:
           printf("Server stopped connecting\n");
           break;
-        case 3:
+        case 103:
           printf("Server refused further connections\n");
           break;
-        case 4:
+        case 104:
           printf("Server disconnected\n");
           break;
         case -1:

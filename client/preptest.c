@@ -294,24 +294,19 @@ int create_and_connect(struct testData* test, int newSockCount){
       // check to see if it was a server error
       if(i > 0){
         if(errno == ETIMEDOUT){
-          test->code = 2;
+          test->code = 101;
         } else if(errno == ECONNREFUSED){
-          test->code = 3;
+          test->code = 102;
         }
         // shutdown anything that opened so far
         for(i = i; i >=0; --i){
           close(test->sockets[i]);
         }
-        // break the for loop
-        break;
-        // nothing else will execute as the test code is checked
       } else {
         // probably a parameter error
-        for(i = i; i >=0; --i){
-          close(test->sockets[i]);
-        }
-        return -1;
+        close(test->sockets[i]);
       }
+      return -1;
     }
 
     // make socket non-blocking
