@@ -305,9 +305,6 @@ int discoverable(int listenPort, struct timeval* timeout){
 
     printf("Incoming discover from %s\n", inet_ntoa(address.sin_addr));
 
-    // done with listen socket
-    close(listenSocket);
-
     // swap the source port for the response port
     address.sin_port = htons(responsePort);
 
@@ -324,6 +321,9 @@ int discoverable(int listenPort, struct timeval* timeout){
       perror("Could not connect to server");
       continue;
     }
+
+    // done with listen socket
+    close(listenSocket);
 
     break;
   }
