@@ -130,7 +130,8 @@ int runTest(struct testData* test){
           {
               printf("Error: %s\n", strerror(err));
           }
-          break;
+          continue;
+          //break;
         }
 
         // check for hangup
