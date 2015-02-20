@@ -124,6 +124,12 @@ int runTest(struct testData* test){
         if(events[j].events & EPOLLERR){
           fprintf(stderr, "Error on socket %d\n", events[i].data.fd);
           test->code = 201;
+          int err = 0;
+          socklen_t errLen = sizeof(err);
+          if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&error, &errlen) == 0)
+          {
+              printf("Error: %s\n", strerror(error));
+          }
           break;
         }
 
