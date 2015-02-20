@@ -126,7 +126,7 @@ int runTest(struct testData* test){
           test->code = 201;
           int err = 0;
           socklen_t errLen = sizeof(err);
-          if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&error, &errlen) == 0)
+          if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errLen) == 0)
           {
               printf("Error: %s\n", strerror(error));
           }
