@@ -431,6 +431,9 @@ int recvAll(int* clients, int count, struct stats* testStats){
   // on all the sockets
   for(i = 0; i < count; ++i){
 
+    // reset buffer position
+    bufPos = 0;
+
     // read the message, terribly inefficiently, but safe and targeting \n
     while((thisRead = recv(clients[i], &msgBuf[bufPos], 1, 0)) > 0){
 
