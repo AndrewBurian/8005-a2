@@ -48,6 +48,9 @@ int runTest(struct testData* test){
   int j = 0;
   int k = 0;
 
+  // error handling
+  int err;
+  socklen_t errLen;
 
   // validate test data
   if(!test){
@@ -124,7 +127,14 @@ int runTest(struct testData* test){
         if(events[j].events & EPOLLERR){
           fprintf(stderr, "Error on socket %d\n", events[i].data.fd);
           test->code = 201;
-          break;
+          err = 0;
+          errLen = sizeof(err);
+          if (getsockopt(events[i].data.fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errLen) == 0)
+          {
+              printf("Error: %s\n", strerror(err));
+          }
+          continue;
+          //break;
         }
 
         // check for hangup
